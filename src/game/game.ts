@@ -229,13 +229,6 @@ export function startGame(host: HTMLElement, options: StartGameOptions = {}): Ga
 
   hud.setStars(starCount);
 
-  // TEMPORARY test hook - MUST BE REMOVED before finishing
-  (window as any).__forceFinish = () => {
-    finished = true;
-    speed = 0;
-    distanceTraveled = FINISH_DISTANCE;
-  };
-
   return {
     triggerStart() {
       if (started) return;
