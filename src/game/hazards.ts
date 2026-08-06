@@ -1,16 +1,14 @@
 import * as THREE from 'three';
-import {
-  CAR_Z,
-  COLLECT_CATCH_DISTANCE,
-  COLLECT_RECYCLE_Z,
-  HAZARD_GAP,
-  HAZARD_GAP_JITTER,
-  HAZARD_LABELS,
-  LANES,
-  laneCenterX,
-} from './constants';
+import { CAR_Z, COLLECT_CATCH_DISTANCE, COLLECT_RECYCLE_Z, HAZARD_GAP, HAZARD_GAP_JITTER, LANES, laneCenterX } from './constants';
 import { createSpinningTextMesh } from './glowTextMesh';
+import { outages } from './pickups';
 import { keepClearOfPeer } from './pickupSpacing';
+
+// pickups.ts lists each label repeated a few times (for weighting elsewhere);
+// de-duped here since only one mesh per distinct label is needed, and the
+// shuffle-bag picker below already guarantees an even, non-streaky spread
+// on its own.
+const HAZARD_LABELS = [...new Set(outages)];
 
 export interface Hazards {
   update(dt: number, distanceDelta: number, carLane: number, onHit: () => void): void;

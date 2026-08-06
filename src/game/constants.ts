@@ -29,11 +29,9 @@ export const DECOR_RANGE = 320; // total length of the recycling loop for roadsi
 export const DECOR_SPACING = 16;
 export const DECOR_RECYCLE_Z = 8; // just behind the camera
 
-// Only one collectible is ever active - once it's caught or missed, the next
-// one spawns this far ahead (plus a little randomness) rather than a dense
-// field of items scrolling in at once.
-export const COLLECT_GAP = 28;
-export const COLLECT_GAP_JITTER = 9;
+// Every collectible (see pickups.ts) is laid out ahead of the car at race
+// start, evenly spaced by this distance.
+export const COLLECT_GAP = 18;
 export const COLLECT_CATCH_DISTANCE = 1.6;
 export const COLLECT_RECYCLE_Z = 6;
 
@@ -41,7 +39,6 @@ export const COLLECT_RECYCLE_Z = 6;
 // are fewer of them over the course of a race.
 export const HAZARD_GAP = 95;
 export const HAZARD_GAP_JITTER = 26;
-export const HAZARD_LABELS = ['angry customers', 'missed SLAs', 'low synergy', 'no teamwork'];
 export const MAX_STRIKES = 3;
 
 // Minimum world-distance kept between the active green pickup and the

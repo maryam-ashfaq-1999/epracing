@@ -1,16 +1,7 @@
 import * as THREE from 'three';
-import { createSpinningTextMesh, updateSpinningTextMesh } from './glowTextMesh';
-import {
-  CAR_Z,
-  COLLECT_CATCH_DISTANCE,
-  COLLECT_GAP,
-  COLLECT_GAP_JITTER,
-  COLLECT_RECYCLE_Z,
-  LANES,
-  laneCenterX,
-} from './constants';
+import { createSpinningTextMesh } from './glowTextMesh';
+import { CAR_Z, COLLECT_CATCH_DISTANCE, COLLECT_GAP, LANES, laneCenterX } from './constants';
 import { pickups } from './pickups';
-import { keepClearOfPeer } from './pickupSpacing';
 
 export interface Collectibles {
   update(dt: number, distanceDelta: number, carLane: number, onCatch: () => void): void;
@@ -24,63 +15,58 @@ const PICKUP_COLOR = '#39ff6a';
 // (rather than shrunk to fit one) once a label like "100% Digital Self
 // Service" gets too wide - keeps long pickup labels legible at speed.
 const PICKUP_TEXT_OPTIONS = { maxFontSize: 67, minFontSize: 37, maxLineWidth: 340, allowWrap: true };
+const START_OFFSET = 20; // world units ahead of the car before the first collectible
 
-// Each pickup label from pickups.ts appears at most once per race, in the
-// order they're listed there - once the queue runs out, no more
-// collectibles spawn.
-export function createCollectibles(scene: THREE.Scene, getPeerZ: (() => number) | null = null): Collectibles {
-  const queue = pickups;
-  let queueIndex = 0;
+interface PlacedPickup {
+  group: THREE.Group;
+  lane: number;
+  caught: boolean;
+}
 
-  const group = createSpinningTextMesh(queue[0] ?? '', PICKUP_COLOR, 0.8, PICKUP_TEXT_OPTIONS);
-  scene.add(group);
-
-  let lane = 0;
-  let collected = false;
-  let exhausted = false;
-
-  function respawnAhead(): void {
-    if (queueIndex >= queue.length) {
-      exhausted = true;
-      group.visible = false;
-      return;
-    }
-    updateSpinningTextMesh(group, queue[queueIndex], PICKUP_COLOR, PICKUP_TEXT_OPTIONS);
-    queueIndex += 1;
-
-    lane = Math.floor(Math.random() * LANES);
-    const aheadDistance = keepClearOfPeer(COLLECT_GAP + Math.random() * COLLECT_GAP_JITTER, getPeerZ);
-    group.position.set(laneCenterX(lane), PICKUP_HEIGHT, CAR_Z - aheadDistance);
-    collected = false;
-    group.visible = true;
-  }
-
-  respawnAhead();
+// Every pickup label from pickups.ts is laid out ahead of the car at once,
+// evenly spaced by COLLECT_GAP, rather than spawning the next one only once
+// the previous is caught or passed - the whole run's collectibles exist
+// from the start, each shown exactly once.
+export function createCollectibles(scene: THREE.Scene): Collectibles {
+  const items: PlacedPickup[] = pickups.map((text, i) => {
+    const group = createSpinningTextMesh(text, PICKUP_COLOR, 0.8, PICKUP_TEXT_OPTIONS);
+    const lane = Math.floor(Math.random() * LANES);
+    group.position.set(laneCenterX(lane), PICKUP_HEIGHT, CAR_Z - START_OFFSET - i * COLLECT_GAP);
+    scene.add(group);
+    return { group, lane, caught: false };
+  });
 
   return {
     update(_dt, distanceDelta, carLane, onCatch) {
-      if (exhausted) return;
+      for (const item of items) {
+        if (item.caught) continue;
+        item.group.position.z += distanceDelta;
 
-      group.position.z += distanceDelta;
-
-      if (!collected) {
-        const dz = Math.abs(group.position.z - CAR_Z);
-        if (dz < COLLECT_CATCH_DISTANCE && lane === carLane) {
-          collected = true;
-          group.visible = false;
+        const dz = Math.abs(item.group.position.z - CAR_Z);
+        if (dz < COLLECT_CATCH_DISTANCE && item.lane === carLane) {
+          item.caught = true;
+          item.group.visible = false;
           onCatch();
         }
       }
-
-      if (group.position.z > COLLECT_RECYCLE_Z) {
-        respawnAhead();
-      }
     },
     hide() {
-      group.visible = false;
+      for (const item of items) item.group.visible = false;
     },
     getActiveZ() {
-      return group.position.z;
+      // Nearest not-yet-caught item still ahead of the car, so hazards can
+      // keep clear of it.
+      let nearestZ = CAR_Z;
+      let nearestDist = Infinity;
+      for (const item of items) {
+        if (item.caught) continue;
+        const d = CAR_Z - item.group.position.z;
+        if (d >= 0 && d < nearestDist) {
+          nearestDist = d;
+          nearestZ = item.group.position.z;
+        }
+      }
+      return nearestZ;
     },
   };
 }

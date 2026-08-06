@@ -254,6 +254,21 @@
       .retry-btn:active {
         background: #7ccb4d;
       }
+      .secondary-action-btn {
+        display: block;
+        margin: 12px auto 0;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 12px 32px;
+        font-size: clamp(13px, 3.4vw, 16px);
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .secondary-action-btn:active {
+        background: rgba(255, 255, 255, 0.22);
+      }
 
       .strike-bar {
         position: absolute;
@@ -526,6 +541,9 @@
         font-weight: 800;
         margin-bottom: 16px;
       }
+      #startDialogTitle {
+        cursor: pointer;
+      }
       .menu-input {
         width: 100%;
         box-sizing: border-box;
@@ -716,6 +734,7 @@
             <div class="finish-score"><span id="finalStarCount">0</span><span class="star-icon">★</span></div>
             <div class="finish-subtitle">stars collected</div>
             <button id="retryBtn" class="retry-btn" type="button">Retry</button>
+            <button id="viewLeaderboardBtn" class="secondary-action-btn" type="button">View Leaderboard</button>
           </div>
         </div>
 
@@ -723,6 +742,7 @@
           <div class="lose-card">
             <div class="lose-title">Oops, you lost!</div>
             <button id="loseRetryBtn" class="retry-btn" type="button">Retry</button>
+            <button id="loseViewLeaderboardBtn" class="secondary-action-btn" type="button">View Leaderboard</button>
           </div>
         </div>
 
@@ -733,7 +753,7 @@
 
         <div id="startDialog" class="modal-overlay">
           <div class="modal-card">
-            <div class="modal-title">Enter your name to start</div>
+            <div class="modal-title" id="startDialogTitle">Enter your name to start</div>
             <input id="playerNameInput" class="menu-input" type="text" placeholder="Your name" maxlength="24" />
             <div id="startDialogError" class="menu-error hidden"></div>
             <button id="startRaceBtn" class="menu-btn" type="button">Start</button>

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createCar } from './car';
-import { createCollectibles, type Collectibles } from './collectibles';
+import { createCollectibles } from './collectibles';
 import {
   BASE_SPEED,
   CAMERA_BACK,
@@ -17,7 +17,7 @@ import {
 } from './constants';
 import { createDecor } from './decor';
 import { createFinishLine } from './finishLine';
-import { createHazards, type Hazards } from './hazards';
+import { createHazards } from './hazards';
 import { createHud } from './hud';
 import { createMilestones } from './milestones';
 import { createRoad } from './road';
@@ -71,16 +71,11 @@ export function startGame(host: HTMLElement, options: StartGameOptions = {}): Ga
   const { renderer, scene, camera } = createSceneRig(host);
   const road = createRoad(scene);
   const decor = createDecor(scene);
-  // Each pickup stream needs to know the other's current position so spawns
-  // stay a minimum distance apart. Neither exists yet while constructing the
-  // first one, so pass a lazy getter that resolves the peer once both are
-  // built (only respawns during play call it, never the initial spawn).
-  let collectiblesRef: Collectibles | null = null;
-  let hazardsRef: Hazards | null = null;
-  const collectibles = createCollectibles(scene, () => (hazardsRef ? hazardsRef.getActiveZ() : CAR_Z));
-  const hazards = createHazards(scene, () => (collectiblesRef ? collectiblesRef.getActiveZ() : CAR_Z));
-  collectiblesRef = collectibles;
-  hazardsRef = hazards;
+  // Collectibles are all laid out up front (see collectibles.ts), so hazards
+  // can just ask it directly where the nearest one still ahead is, to spawn
+  // clear of it.
+  const collectibles = createCollectibles(scene);
+  const hazards = createHazards(scene, () => collectibles.getActiveZ());
   const car = createCar(scene);
   const skidMarks = createSkidMarks(scene);
   const finishLine = createFinishLine(scene);

@@ -61,11 +61,15 @@ export async function startApp(): Promise<void> {
   const canvasHost = byId<HTMLDivElement>('canvasHost');
 
   const raceProgressLabel = byId<HTMLDivElement>('raceProgressLabel');
+  const startDialogTitle = byId<HTMLDivElement>('startDialogTitle');
 
   const startDialog = byId<HTMLDivElement>('startDialog');
   const playerNameInput = byId<HTMLInputElement>('playerNameInput');
   const startDialogError = byId<HTMLDivElement>('startDialogError');
   const startRaceBtn = byId<HTMLButtonElement>('startRaceBtn');
+
+  const viewLeaderboardBtn = byId<HTMLButtonElement>('viewLeaderboardBtn');
+  const loseViewLeaderboardBtn = byId<HTMLButtonElement>('loseViewLeaderboardBtn');
 
   const leaderboardOverlay = byId<HTMLDivElement>('leaderboardOverlay');
   const menuLeaderboardBody = byId<HTMLTableSectionElement>('menuLeaderboardBody');
@@ -95,6 +99,31 @@ export async function startApp(): Promise<void> {
     onProgressUpdate: (progress) => void handleProgressUpdate(progress),
   });
 
+  async function showLeaderboard(): Promise<void> {
+    leaderboardOverlay.classList.remove('hidden');
+    clearError(leaderboardError);
+    leaderboardStatus.classList.add('hidden');
+    try {
+      const entries = await fetchLeaderboard();
+      renderLeaderboard(menuLeaderboardBody, entries);
+    } catch (err) {
+      showError(leaderboardError, 'Could not load the leaderboard.');
+      console.error(err);
+    }
+  }
+
+  async function showScoreDistribution(): Promise<void> {
+    scoreDistributionOverlay.classList.remove('hidden');
+    clearError(scoreDistributionError);
+    try {
+      const entries = await fetchLeaderboard();
+      renderScoreChart(scoreChart, entries);
+    } catch (err) {
+      showError(scoreDistributionError, 'Could not load the score distribution.');
+      console.error(err);
+    }
+  }
+
   async function handleProgressUpdate(progress: RaceProgress): Promise<void> {
     if (!currentEntryId) return;
     try {
@@ -117,15 +146,7 @@ export async function startApp(): Promise<void> {
     // The finish/lose overlay (already shown by the game itself) carries the
     // score and Retry button; the leaderboard now surfaces on top of it so
     // the player immediately sees where that run ranks.
-    try {
-      const entries = await fetchLeaderboard();
-      renderLeaderboard(menuLeaderboardBody, entries);
-      clearError(leaderboardError);
-      leaderboardStatus.classList.add('hidden');
-      leaderboardOverlay.classList.remove('hidden');
-    } catch (err) {
-      console.error('Failed to load leaderboard', err);
-    }
+    void showLeaderboard();
   }
 
   startRaceBtn.disabled = true;
@@ -153,6 +174,9 @@ export async function startApp(): Promise<void> {
     })();
   });
 
+  viewLeaderboardBtn.addEventListener('click', () => void showLeaderboard());
+  loseViewLeaderboardBtn.addEventListener('click', () => void showLeaderboard());
+
   closeLeaderboardBtn.addEventListener('click', () => {
     leaderboardOverlay.classList.add('hidden');
   });
@@ -179,19 +203,8 @@ export async function startApp(): Promise<void> {
     })();
   });
 
-  raceProgressLabel.addEventListener('click', () => {
-    scoreDistributionOverlay.classList.remove('hidden');
-    clearError(scoreDistributionError);
-    void (async () => {
-      try {
-        const entries = await fetchLeaderboard();
-        renderScoreChart(scoreChart, entries);
-      } catch (err) {
-        showError(scoreDistributionError, 'Could not load the score distribution.');
-        console.error(err);
-      }
-    })();
-  });
+  raceProgressLabel.addEventListener('click', () => void showScoreDistribution());
+  startDialogTitle.addEventListener('click', () => void showScoreDistribution());
 
   closeScoreDistributionBtn.addEventListener('click', () => {
     scoreDistributionOverlay.classList.add('hidden');
