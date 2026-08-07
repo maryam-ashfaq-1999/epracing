@@ -596,6 +596,14 @@
       .menu-btn.danger:active {
         color: #ff5c5c;
       }
+      .menu-btn.danger-solid {
+        background: #ff3b3b;
+        color: #fff;
+        margin-bottom: 10px;
+      }
+      .menu-btn.danger-solid:active {
+        background: #e02e2e;
+      }
       .menu-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -617,6 +625,17 @@
       }
       .menu-status.hidden {
         display: none;
+      }
+      .clear-passcode-section {
+        margin-top: 10px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .clear-passcode-section.hidden {
+        display: none;
+      }
+      .clear-passcode-section .menu-input {
+        margin-bottom: 10px;
       }
 
       .hidden {
@@ -814,6 +833,18 @@
             <div id="leaderboardError" class="menu-error hidden"></div>
             <div id="leaderboardStatus" class="menu-status hidden"></div>
             <button id="clearLeaderboardBtn" class="menu-btn danger" type="button">Clear Leaderboard</button>
+            <div id="clearPasscodeSection" class="clear-passcode-section hidden">
+              <input
+                id="clearPasscodeInput"
+                class="menu-input"
+                type="password"
+                placeholder="Type the passcode to confirm"
+                autocomplete="off"
+              />
+              <div id="clearPasscodeError" class="menu-error hidden"></div>
+              <button id="confirmClearBtn" class="menu-btn danger-solid" type="button">Confirm Clear</button>
+              <button id="cancelClearBtn" class="menu-btn secondary" type="button">Cancel</button>
+            </div>
           </div>
         </div>
 
@@ -823,8 +854,6 @@
             <div class="modal-title">Score Distribution</div>
             <div id="scoreChart" class="score-chart"></div>
             <div id="scoreDistributionError" class="menu-error hidden"></div>
-            <div id="scoreDistributionStatus" class="menu-status hidden"></div>
-            <button id="clearLeaderboardBtn" class="menu-btn danger" type="button">Clear Leaderboard</button>
           </div>
         </div>
       </div>

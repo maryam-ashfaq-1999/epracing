@@ -76,14 +76,20 @@ export async function startApp(): Promise<void> {
   const leaderboardTableSection = byId<HTMLDivElement>('leaderboardTableSection');
   const menuLeaderboardBody = byId<HTMLTableSectionElement>('menuLeaderboardBody');
   const leaderboardError = byId<HTMLDivElement>('leaderboardError');
+  const leaderboardStatus = byId<HTMLDivElement>('leaderboardStatus');
   const closeLeaderboardBtn = byId<HTMLButtonElement>('closeLeaderboardBtn');
+  const clearLeaderboardBtn = byId<HTMLButtonElement>('clearLeaderboardBtn');
 
   const scoreDistributionOverlay = byId<HTMLDivElement>('scoreDistributionOverlay');
   const scoreChart = byId<HTMLDivElement>('scoreChart');
   const scoreDistributionError = byId<HTMLDivElement>('scoreDistributionError');
-  const scoreDistributionStatus = byId<HTMLDivElement>('scoreDistributionStatus');
   const closeScoreDistributionBtn = byId<HTMLButtonElement>('closeScoreDistributionBtn');
-  const clearLeaderboardBtn = byId<HTMLButtonElement>('clearLeaderboardBtn');
+  const clearPasscodeSection = byId<HTMLDivElement>('clearPasscodeSection');
+  const clearPasscodeInput = byId<HTMLInputElement>('clearPasscodeInput');
+  const clearPasscodeError = byId<HTMLDivElement>('clearPasscodeError');
+  const confirmClearBtn = byId<HTMLButtonElement>('confirmClearBtn');
+  const cancelClearBtn = byId<HTMLButtonElement>('cancelClearBtn');
+  const CLEAR_PASSCODE = 'delete';
 
   let playerName = '';
   // Set the moment the race starts (see startRaceBtn below) so an abandoned
@@ -104,6 +110,8 @@ export async function startApp(): Promise<void> {
   async function showLeaderboard(): Promise<void> {
     leaderboardOverlay.classList.remove('hidden');
     clearError(leaderboardError);
+    leaderboardStatus.classList.add('hidden');
+    resetClearPasscode();
     leaderboardTableSection.classList.add('hidden');
     leaderboardLoading.classList.remove('hidden');
     try {
@@ -121,7 +129,6 @@ export async function startApp(): Promise<void> {
   async function showScoreDistribution(): Promise<void> {
     scoreDistributionOverlay.classList.remove('hidden');
     clearError(scoreDistributionError);
-    scoreDistributionStatus.classList.add('hidden');
     try {
       const entries = await fetchLeaderboard();
       renderScoreChart(scoreChart, entries);
@@ -190,23 +197,42 @@ export async function startApp(): Promise<void> {
   });
 
   clearLeaderboardBtn.addEventListener('click', () => {
-    if (!window.confirm('Clear the entire leaderboard for everyone? This cannot be undone.')) {
+    clearLeaderboardBtn.classList.add('hidden');
+    clearPasscodeSection.classList.remove('hidden');
+    clearPasscodeInput.value = '';
+    clearError(clearPasscodeError);
+    clearPasscodeInput.focus();
+  });
+
+  function resetClearPasscode(): void {
+    clearPasscodeSection.classList.add('hidden');
+    clearLeaderboardBtn.classList.remove('hidden');
+    clearPasscodeInput.value = '';
+    clearError(clearPasscodeError);
+  }
+
+  cancelClearBtn.addEventListener('click', resetClearPasscode);
+
+  confirmClearBtn.addEventListener('click', () => {
+    if (clearPasscodeInput.value.trim().toLowerCase() !== CLEAR_PASSCODE) {
+      showError(clearPasscodeError, 'Incorrect passcode.');
       return;
     }
-    clearError(scoreDistributionError);
-    scoreDistributionStatus.classList.add('hidden');
-    clearLeaderboardBtn.disabled = true;
+    clearError(leaderboardError);
+    leaderboardStatus.classList.add('hidden');
+    confirmClearBtn.disabled = true;
     void (async () => {
       try {
         await clearLeaderboard();
         renderLeaderboard(menuLeaderboardBody, []);
         renderScoreChart(scoreChart, []);
-        showStatus(scoreDistributionStatus, 'Leaderboard cleared.');
+        resetClearPasscode();
+        showStatus(leaderboardStatus, 'Leaderboard cleared.');
       } catch (err) {
-        showError(scoreDistributionError, 'Could not clear the leaderboard. Please try again.');
+        showError(leaderboardError, 'Could not clear the leaderboard. Please try again.');
         console.error(err);
       } finally {
-        clearLeaderboardBtn.disabled = false;
+        confirmClearBtn.disabled = false;
       }
     })();
   });
