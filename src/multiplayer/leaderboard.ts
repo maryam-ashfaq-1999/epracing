@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, getDocs, limit, orderBy, query, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, limit, orderBy, query, serverTimestamp, Timestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { RaceResult } from './types';
 
@@ -10,6 +10,11 @@ export interface LeaderboardEntry {
   stars: number;
   strikes: number;
   distanceFraction: number;
+  // Set once at creation (see createRaceEntry/submitScore) and never
+  // touched by later checkpoint/finalize updates, so it reflects when the
+  // run started - null only for the brief window before the server has
+  // resolved the serverTimestamp() sentinel.
+  createdAt: Date | null;
 }
 
 const LEADERBOARD_LIMIT = 100;
@@ -54,9 +59,13 @@ export async function updateRaceEntry(entryId: string, result: RaceResult): Prom
 }
 
 export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
-  const leaderboardQuery = query(collection(db, 'leaderboard'), orderBy('stars', 'desc'), limit(LEADERBOARD_LIMIT));
+  const leaderboardQuery = query(collection(db, 'leaderboard'), orderBy('createdAt', 'desc'), limit(LEADERBOARD_LIMIT));
   const snap = await getDocs(leaderboardQuery);
-  return snap.docs.map((d) => d.data() as LeaderboardEntry);
+  return snap.docs.map((d) => {
+    const data = d.data();
+    const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : null;
+    return { ...data, createdAt } as LeaderboardEntry;
+  });
 }
 
 export async function clearLeaderboard(): Promise<void> {

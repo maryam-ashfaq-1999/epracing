@@ -37,7 +37,7 @@ export const COLLECT_RECYCLE_Z = 6;
 
 // Hazards to avoid - spaced further apart than the green pickups so there
 // are fewer of them over the course of a race.
-export const HAZARD_GAP = 12;
+export const HAZARD_GAP = 95;
 export const HAZARD_GAP_JITTER = 26;
 export const MAX_STRIKES = 3;
 
