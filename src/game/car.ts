@@ -18,6 +18,50 @@ const TARGET_WIDTH = 1.9; // world units, roughly one traffic-lane-width car
 const PLACEHOLDER_WIDTH = 1.8;
 const PLACEHOLDER_HEIGHT = 1.1;
 const PLACEHOLDER_DEPTH = 2.6;
+const PLACEHOLDER_COLOR = 0x0d0d0f; // near-black, matching the real car's paint
+const PLACEHOLDER_BODY_HEIGHT = 0.45; // lower box; the rest is the cabin box on top
+const PLACEHOLDER_CABIN_WIDTH = 1.3;
+const PLACEHOLDER_CABIN_DEPTH = 1.5;
+const PLACEHOLDER_WHEEL_RADIUS = 0.32;
+const PLACEHOLDER_WHEEL_THICKNESS = 0.22;
+
+// A rough silhouette (body + cabin boxes, four wheel cylinders) shown while
+// the real ~37MB car.obj is still downloading, so the loading state reads
+// as "a car" instead of a plain box.
+function createPlaceholderCar(): THREE.Group {
+  const material = new THREE.MeshStandardMaterial({ color: PLACEHOLDER_COLOR, roughness: 0.5, metalness: 0.15 });
+  const group = new THREE.Group();
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(PLACEHOLDER_WIDTH, PLACEHOLDER_BODY_HEIGHT, PLACEHOLDER_DEPTH), material);
+  body.position.y = PLACEHOLDER_BODY_HEIGHT / 2;
+  group.add(body);
+
+  const cabinHeight = PLACEHOLDER_HEIGHT - PLACEHOLDER_BODY_HEIGHT;
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(PLACEHOLDER_CABIN_WIDTH, cabinHeight, PLACEHOLDER_CABIN_DEPTH), material);
+  cabin.position.y = PLACEHOLDER_BODY_HEIGHT + cabinHeight / 2;
+  group.add(cabin);
+
+  const wheelGeometry = new THREE.CylinderGeometry(PLACEHOLDER_WHEEL_RADIUS, PLACEHOLDER_WHEEL_RADIUS, PLACEHOLDER_WHEEL_THICKNESS, 16);
+  wheelGeometry.rotateZ(Math.PI / 2); // cylinder's default axis is Y; lay it on its side along X
+  const wheelX = PLACEHOLDER_WIDTH / 2 - PLACEHOLDER_WHEEL_THICKNESS / 2 + 0.03;
+  const wheelZ = PLACEHOLDER_DEPTH / 2 - PLACEHOLDER_WHEEL_RADIUS - 0.2;
+  for (const sideX of [-1, 1]) {
+    for (const sideZ of [-1, 1]) {
+      const wheel = new THREE.Mesh(wheelGeometry, material);
+      wheel.position.set(sideX * wheelX, PLACEHOLDER_WHEEL_RADIUS, sideZ * wheelZ);
+      group.add(wheel);
+    }
+  }
+
+  group.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
+  });
+
+  return group;
+}
 
 const LOGO_WIDTH = 0.75; // world units
 const LOGO_ASPECT = 816 / 750; // source image height/width
@@ -64,13 +108,7 @@ export function createCar(scene: THREE.Scene): Car {
   const visual = new THREE.Group();
   group.add(visual);
 
-  const placeholder = new THREE.Mesh(
-    new THREE.BoxGeometry(PLACEHOLDER_WIDTH, PLACEHOLDER_HEIGHT, PLACEHOLDER_DEPTH),
-    new THREE.MeshStandardMaterial({ color: 0xe5e9ef, roughness: 0.5, metalness: 0.15 }),
-  );
-  placeholder.position.y = PLACEHOLDER_HEIGHT / 2;
-  placeholder.castShadow = true;
-  placeholder.receiveShadow = true;
+  const placeholder = createPlaceholderCar();
   visual.add(placeholder);
 
   // A thin decal plane resting just above the roof paint, rather than a

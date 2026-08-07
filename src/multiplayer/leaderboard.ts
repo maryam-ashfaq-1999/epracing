@@ -12,7 +12,7 @@ export interface LeaderboardEntry {
   distanceFraction: number;
 }
 
-const LEADERBOARD_LIMIT = 50;
+const LEADERBOARD_LIMIT = 100;
 
 export async function submitScore(name: string, result: RaceResult): Promise<void> {
   await addDoc(collection(db, 'leaderboard'), {
