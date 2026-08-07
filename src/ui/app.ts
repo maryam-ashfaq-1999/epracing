@@ -72,16 +72,18 @@ export async function startApp(): Promise<void> {
   const loseViewLeaderboardBtn = byId<HTMLButtonElement>('loseViewLeaderboardBtn');
 
   const leaderboardOverlay = byId<HTMLDivElement>('leaderboardOverlay');
+  const leaderboardLoading = byId<HTMLDivElement>('leaderboardLoading');
+  const leaderboardTableSection = byId<HTMLDivElement>('leaderboardTableSection');
   const menuLeaderboardBody = byId<HTMLTableSectionElement>('menuLeaderboardBody');
   const leaderboardError = byId<HTMLDivElement>('leaderboardError');
-  const leaderboardStatus = byId<HTMLDivElement>('leaderboardStatus');
   const closeLeaderboardBtn = byId<HTMLButtonElement>('closeLeaderboardBtn');
-  const clearLeaderboardBtn = byId<HTMLButtonElement>('clearLeaderboardBtn');
 
   const scoreDistributionOverlay = byId<HTMLDivElement>('scoreDistributionOverlay');
   const scoreChart = byId<HTMLDivElement>('scoreChart');
   const scoreDistributionError = byId<HTMLDivElement>('scoreDistributionError');
+  const scoreDistributionStatus = byId<HTMLDivElement>('scoreDistributionStatus');
   const closeScoreDistributionBtn = byId<HTMLButtonElement>('closeScoreDistributionBtn');
+  const clearLeaderboardBtn = byId<HTMLButtonElement>('clearLeaderboardBtn');
 
   let playerName = '';
   // Set the moment the race starts (see startRaceBtn below) so an abandoned
@@ -102,19 +104,24 @@ export async function startApp(): Promise<void> {
   async function showLeaderboard(): Promise<void> {
     leaderboardOverlay.classList.remove('hidden');
     clearError(leaderboardError);
-    leaderboardStatus.classList.add('hidden');
+    leaderboardTableSection.classList.add('hidden');
+    leaderboardLoading.classList.remove('hidden');
     try {
       const entries = await fetchLeaderboard();
       renderLeaderboard(menuLeaderboardBody, entries);
     } catch (err) {
       showError(leaderboardError, 'Could not load the leaderboard.');
       console.error(err);
+    } finally {
+      leaderboardLoading.classList.add('hidden');
+      leaderboardTableSection.classList.remove('hidden');
     }
   }
 
   async function showScoreDistribution(): Promise<void> {
     scoreDistributionOverlay.classList.remove('hidden');
     clearError(scoreDistributionError);
+    scoreDistributionStatus.classList.add('hidden');
     try {
       const entries = await fetchLeaderboard();
       renderScoreChart(scoreChart, entries);
@@ -163,6 +170,7 @@ export async function startApp(): Promise<void> {
     const name = playerNameInput.value.trim() || randomGuestName();
     clearError(startDialogError);
     playerName = name;
+    raceProgressLabel.textContent = `Race Progress - ${name}`;
     startDialog.classList.add('hidden');
     gameController.triggerStart();
     void (async () => {
@@ -185,17 +193,17 @@ export async function startApp(): Promise<void> {
     if (!window.confirm('Clear the entire leaderboard for everyone? This cannot be undone.')) {
       return;
     }
-    clearError(leaderboardError);
-    leaderboardStatus.classList.add('hidden');
+    clearError(scoreDistributionError);
+    scoreDistributionStatus.classList.add('hidden');
     clearLeaderboardBtn.disabled = true;
     void (async () => {
       try {
         await clearLeaderboard();
         renderLeaderboard(menuLeaderboardBody, []);
         renderScoreChart(scoreChart, []);
-        showStatus(leaderboardStatus, 'Leaderboard cleared.');
+        showStatus(scoreDistributionStatus, 'Leaderboard cleared.');
       } catch (err) {
-        showError(leaderboardError, 'Could not clear the leaderboard. Please try again.');
+        showError(scoreDistributionError, 'Could not clear the leaderboard. Please try again.');
         console.error(err);
       } finally {
         clearLeaderboardBtn.disabled = false;

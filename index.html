@@ -623,6 +623,36 @@
         display: none;
       }
 
+      .loading-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: clamp(28px, 8vw, 48px) 0;
+      }
+      .loading-indicator.hidden {
+        display: none;
+      }
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 4px solid rgba(255, 255, 255, 0.15);
+        border-top-color: #8de35b;
+        border-radius: 50%;
+        animation: spinner-rotate 0.8s linear infinite;
+      }
+      @keyframes spinner-rotate {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-text {
+        color: #b9c2e0;
+        font-size: clamp(12px, 3vw, 14px);
+        font-weight: 700;
+      }
+
       .leaderboard-section {
         margin: 14px 0;
         max-height: 34vh;
@@ -764,7 +794,11 @@
           <div class="modal-card">
             <button id="closeLeaderboardBtn" class="modal-close-btn" type="button" aria-label="Close">✕</button>
             <div class="modal-title">Leaderboard</div>
-            <div class="leaderboard-section">
+            <div id="leaderboardLoading" class="loading-indicator hidden">
+              <div class="spinner"></div>
+              <div class="loading-text">Loading leaderboard…</div>
+            </div>
+            <div id="leaderboardTableSection" class="leaderboard-section">
               <table class="leaderboard-table">
                 <thead>
                   <tr>
@@ -789,6 +823,8 @@
             <div class="modal-title">Score Distribution</div>
             <div id="scoreChart" class="score-chart"></div>
             <div id="scoreDistributionError" class="menu-error hidden"></div>
+            <div id="scoreDistributionStatus" class="menu-status hidden"></div>
+            <button id="clearLeaderboardBtn" class="menu-btn danger" type="button">Clear Leaderboard</button>
           </div>
         </div>
       </div>
